@@ -15,6 +15,9 @@
 ```shell
 # 全局安装
 npm install -g load-markdwon-image
+
+# or
+yarn global add load-markdown-image
 ```
 
 ```shell
