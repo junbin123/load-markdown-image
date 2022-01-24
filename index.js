@@ -50,7 +50,8 @@ async function work() {
       if (!/^http/.test(url)) {
         continue;
       }
-      if (!url.toLowerCase().match(/.(png|jpg|jpeg|gif|webp)$/)) {
+      // 匹配url的图片格式信息
+      if (!getTypeByUrl(url)) {
         continue;
       }
       console.log("正在下载:", url);
@@ -68,10 +69,10 @@ async function work() {
   }
 }
 
+// 下载图片
 function getLocalPath(url) {
-  const fileType = url.toLowerCase().match(/.(png|jpg|jpeg|gif|webp)$/)[1];
+  const fileType = getTypeByUrl(url)
   const fileName = `${new Date().getTime()}.${fileType}`;
-
   const promise = new Promise((resolve, reject) => {
     const api = /^https/.test(url) ? https : http;
     api.get(encodeURI(url), { timeout: 10000 }, (res) => {
@@ -83,4 +84,13 @@ function getLocalPath(url) {
     });
   });
   return promise;
+}
+// 通过URL获取图片格式
+function getTypeByUrl(url) {
+  const res = url
+    .toLowerCase()
+    .replace(/\s*/g, "") // 清除空格
+    .replace(/[?#]*$/g, "") // 清除结尾的?#字符
+    .match(/\.[a-z]{3,5}$/g); // 匹配类型
+  return res ? res[0].slice(1) : "";
 }
