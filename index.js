@@ -5,7 +5,8 @@ if (process.argv.length !== 3) {
 
 const path = require("path");
 const fs = require("fs");
-const axios = require("axios");
+const http = require("http");
+const https = require("https");
 
 const inputPath = process.argv[2];
 let rootPath = path.resolve(inputPath);
@@ -71,16 +72,15 @@ function getLocalPath(url) {
   const fileType = url.toLowerCase().match(/.(png|jpg|jpeg|gif|webp)$/)[1];
   const fileName = `${new Date().getTime()}.${fileType}`;
 
-  return axios({
-    url: encodeURI(url),
-    responseType: "stream",
-    timeout: 10000,
-  }).then((response) => {
-    return new Promise((resolve, reject) => {
-      response.data
-        .pipe(fs.createWriteStream(`${rootPath}/images/${fileName}`))
+  const promise = new Promise((resolve, reject) => {
+    const api = /^https/.test(url) ? https : http;
+    api.get(encodeURI(url), { timeout: 10000 }, (res) => {
+      const path = `${rootPath}/images/${fileName}`;
+      res
+        .pipe(fs.createWriteStream(path))
         .on("finish", () => resolve(fileName))
         .on("error", (e) => reject(e));
     });
   });
+  return promise;
 }
