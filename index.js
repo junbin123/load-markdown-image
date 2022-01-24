@@ -27,7 +27,7 @@ if (files.length === 0) {
 const timeStart = Date.parse(new Date());
 console.log("目录：", rootPath);
 work().then(() => {
-  console.log(`下载完成，耗时 ${(Date.parse(new Date()) - timeStart) / 1000}s`);
+  console.log(`下载完成，总时长 ${(Date.parse(new Date()) - timeStart) / 1000}s`);
 });
 
 async function work() {
@@ -50,15 +50,25 @@ async function work() {
       if (!/^http/.test(url)) {
         continue;
       }
-      // 匹配url的图片格式信息
-      if (!getTypeByUrl(url)) {
-        continue;
-      }
-      console.log("正在下载:", url);
       try {
-        const localFileName = await getLocalPath(url);
-        console.log("下载完成:", localFileName);
-        const replaceStr = match.replace(url, `./images/${localFileName}`);
+        // 匹配url的图片格式信息
+        if (!getTypeByUrl(url)) {
+          // 处理url没有格式的图片
+          console.log("正在下载:", url);
+          const imageName = await setNoTypeImage(url);
+          console.log("下载完成:", imageName);
+          console.log("\n");
+          if (imageName) {
+            const replaceStr = match.replace(url, `./images/${imageName}`);
+            content = content.replace(match, replaceStr);
+            fs.writeFileSync(filePath, content, "utf8");
+          }
+          continue;
+        }
+        console.log("正在下载:", url);
+        const { imageName } = await getLocalPath(url);
+        console.log("下载完成:", imageName);
+        const replaceStr = match.replace(url, `./images/${imageName}`);
         content = content.replace(match, replaceStr);
         fs.writeFileSync(filePath, content, "utf8");
       } catch (e) {
@@ -71,15 +81,15 @@ async function work() {
 
 // 下载图片
 function getLocalPath(url) {
-  const fileType = getTypeByUrl(url)
-  const fileName = `${new Date().getTime()}.${fileType}`;
+  const fileType = getTypeByUrl(url);
+  const imageName = `${new Date().getTime()}${fileType ? `.${fileType}` : ""}`;
   const promise = new Promise((resolve, reject) => {
     const api = /^https/.test(url) ? https : http;
     api.get(encodeURI(url), { timeout: 10000 }, (res) => {
-      const path = `${rootPath}/images/${fileName}`;
+      const imagePath = `${rootPath}/images/${imageName}`;
       res
-        .pipe(fs.createWriteStream(path))
-        .on("finish", () => resolve(fileName))
+        .pipe(fs.createWriteStream(imagePath))
+        .on("finish", () => resolve({ imageName, imagePath }))
         .on("error", (e) => reject(e));
     });
   });
@@ -93,4 +103,68 @@ function getTypeByUrl(url) {
     .replace(/[?#]*$/g, "") // 清除结尾的?#字符
     .match(/\.[a-z]{3,5}$/g); // 匹配类型
   return res ? res[0].slice(1) : "";
+}
+
+// 先下载，再识别图片格式
+async function setNoTypeImage(url) {
+  const { imageName, imagePath } = await getLocalPath(url);
+  const buffer = fs.readFileSync(imagePath);
+  const imageType = getImageSuffix(buffer);
+  if (imageType) {
+    fs.renameSync(imagePath, imagePath + imageType);
+    return imageName + imageType;
+  } else {
+    fs.unlinkSync(imagePath);
+    return "";
+  }
+}
+
+function getImageSuffix(fileBuffer) {
+  // 将上文提到的 文件标识头 按 字节 整理到数组中
+  const imageBufferHeaders = [
+    { bufBegin: [0xff, 0xd8], bufEnd: [0xff, 0xd9], suffix: ".jpg" },
+    { bufBegin: [0x00, 0x00, 0x02, 0x00, 0x00], suffix: ".tga" },
+    { bufBegin: [0x00, 0x00, 0x10, 0x00, 0x00], suffix: ".rle" },
+    {
+      bufBegin: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
+      suffix: ".png",
+    },
+    { bufBegin: [0x47, 0x49, 0x46, 0x38, 0x39, 0x61], suffix: ".gif" },
+    { bufBegin: [0x47, 0x49, 0x46, 0x38, 0x37, 0x61], suffix: ".gif" },
+    { bufBegin: [0x42, 0x4d], suffix: ".bmp" },
+    { bufBegin: [0x0a], suffix: ".pcx" },
+    { bufBegin: [0x49, 0x49], suffix: ".tif" },
+    { bufBegin: [0x4d, 0x4d], suffix: ".tif" },
+    {
+      bufBegin: [0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x20, 0x20],
+      suffix: ".ico",
+    },
+    {
+      bufBegin: [0x00, 0x00, 0x02, 0x00, 0x01, 0x00, 0x20, 0x20],
+      suffix: ".cur",
+    },
+    { bufBegin: [0x46, 0x4f, 0x52, 0x4d], suffix: ".iff" },
+    { bufBegin: [0x52, 0x49, 0x46, 0x46], suffix: ".ani" },
+  ];
+  for (const imageBufferHeader of imageBufferHeaders) {
+    let isEqual;
+    // 判断标识头前缀
+    if (imageBufferHeader.bufBegin) {
+      const buf = Buffer.from(imageBufferHeader.bufBegin);
+      isEqual = buf.equals(
+        //使用 buffer.slice 方法 对 buffer 以字节为单位切割
+        fileBuffer.slice(0, imageBufferHeader.bufBegin.length)
+      );
+    }
+    // 判断标识头后缀
+    if (isEqual && imageBufferHeader.bufEnd) {
+      const buf = Buffer.from(imageBufferHeader.bufEnd);
+      isEqual = buf.equals(fileBuffer.slice(-imageBufferHeader.bufEnd.length));
+    }
+    if (isEqual) {
+      return imageBufferHeader.suffix;
+    }
+  }
+  // 未能识别到该文件类型
+  return "";
 }
