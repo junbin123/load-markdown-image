@@ -32,3 +32,5 @@
 
 # 失效的图片
 ![gg](https://zdnet2.cbsistatic.com/hub/i/2020/02/19/d83f9966-d058-4a14-a516-3c509c6b0ade/autocorrect1.gif)
+
+![中文编码](https://s3.dailyio.cn/2020/09/02/%E5%9B%BE%E7%89%87.png)
