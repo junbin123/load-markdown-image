@@ -5,8 +5,7 @@ if (process.argv.length !== 3) {
 
 const path = require("path");
 const fs = require("fs");
-const http = require("http");
-const https = require("https");
+const axios = require("axios");
 
 const inputPath = process.argv[2];
 let rootPath = path.resolve(inputPath);
@@ -27,7 +26,9 @@ if (files.length === 0) {
 const timeStart = Date.parse(new Date());
 console.log("目录：", rootPath);
 work().then(() => {
-  console.log(`下载完成，总时长 ${(Date.parse(new Date()) - timeStart) / 1000}s`);
+  console.log(
+    `下载完成，总时长 ${(Date.parse(new Date()) - timeStart) / 1000}s`
+  );
 });
 
 async function work() {
@@ -83,18 +84,21 @@ async function work() {
 function getLocalPath(url) {
   const fileType = getTypeByUrl(url);
   const imageName = `${new Date().getTime()}${fileType ? `.${fileType}` : ""}`;
-  const promise = new Promise((resolve, reject) => {
-    const api = /^https/.test(url) ? https : http;
-    api.get(encodeURI(url), { timeout: 10000 }, (res) => {
+  return axios({
+    url: encodeURI(url),
+    responseType: "stream",
+    timeout: 10000,
+  }).then((response) => {
+    return new Promise((resolve, reject) => {
       const imagePath = `${rootPath}/images/${imageName}`;
-      res
+      response.data
         .pipe(fs.createWriteStream(imagePath))
         .on("finish", () => resolve({ imageName, imagePath }))
         .on("error", (e) => reject(e));
     });
   });
-  return promise;
 }
+
 // 通过URL获取图片格式
 function getTypeByUrl(url) {
   const res = url
