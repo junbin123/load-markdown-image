@@ -30,6 +30,9 @@ load-markdown-image test
 # or
 load-markdown-image "hello world.md"
 
+# 修改图片存放文件夹名称
+load-markdown-image test.md --fileName=img
+
 ```
 
 ## 说明
