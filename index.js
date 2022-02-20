@@ -44,8 +44,8 @@ async function work() {
       process.exit(1)
     }
   }
-  for (const fileName of files) {
-    const filePath = `${rootPath}/${fileName}`
+  for (const fileItem of files) {
+    const filePath = `${rootPath}/${fileItem}`
     let content = fs.readFileSync(filePath, 'utf8')
     const pattern = /!\[(.*?)\]\((.*?)\)/gm // 匹配图片正则
     const imgList = content.match(pattern) || [] // ![img](http://hello.com/image.png)
