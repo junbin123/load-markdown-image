@@ -1,6 +1,6 @@
 {
   "name": "load-markdown-image",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Download remote images in markdown files and store them locally",
   "main": "dist/index.js",
   "scripts": {
