@@ -1,7 +1,19 @@
-// if (process.argv.length !== 3) {
-//   console.log('命令行：load-markdown-image hello.md')
-//   process.exit(0)
-// }
+const colorDict = {
+  green: '\x1B[32m',
+  red: '\x1B[31m',
+  white: '\x1B[37m',
+}
+const log = {
+  success: (...msg) => {
+    console.log(colorDict.green, '✔', ...msg)
+  },
+  error: (...msg) => {
+    console.log(colorDict.red, '✗', ...msg)
+  },
+  info: (...msg) => {
+    console.log(colorDict.white, ' ', ...msg)
+  },
+}
 
 const path = require('path')
 const fs = require('fs')
@@ -9,7 +21,7 @@ const axios = require('axios')
 
 const inputPath = process.argv[2]
 const fileName =
-  process.argv.find((item) => item.includes('fileName='))?.split('=')?.[1] || 'images'
+  process.argv.find((item) => item.includes('--fileName='))?.split('=')?.[1] || 'images'
 
 let rootPath = path.resolve(inputPath)
 let files = []
@@ -27,11 +39,10 @@ if (files.length === 0) {
 }
 
 const timeStart = Date.parse(new Date())
-console.log('目录：', rootPath)
+log.info('process the directory', rootPath)
 work().then(() => {
-  console.log(`下载完成，总时长 ${(Date.parse(new Date()) - timeStart) / 1000}s`)
-  console.log('图片存放在：')
-  console.log(`${rootPath}/${fileName}`)
+  log.success('completed, total time:', `${(Date.parse(new Date()) - timeStart) / 1000}s`)
+  log.success('images saved at:', `${rootPath}/${fileName}`)
 })
 
 async function work() {
@@ -40,8 +51,8 @@ async function work() {
   } catch (e) {
     if (e.code === 'EEXIST') {
     } else {
-      console.log(e)
-      process.exit(1)
+      log.error(e)
+      return
     }
   }
   for (const fileItem of files) {
@@ -55,13 +66,13 @@ async function work() {
         continue
       }
       try {
+        log.info('downloading', url)
         // 匹配url的图片格式信息
         if (!getTypeByUrl(url)) {
           // 处理url没有格式的图片
-          console.log('正在下载:', url)
           const imageName = await setNoTypeImage(url)
-          console.log('下载完成:', imageName)
-          console.log('\n')
+          log.success('download success', imageName)
+          log.info('\n')
           if (imageName) {
             const replaceStr = match.replace(url, `./${fileName}/${imageName}`)
             content = content.replace(match, replaceStr)
@@ -69,16 +80,15 @@ async function work() {
           }
           continue
         }
-        console.log('正在下载:', url)
         const { imageName } = await getLocalPath(url)
-        console.log('下载完成:', imageName)
+        log.success('download success', imageName)
         const replaceStr = match.replace(url, `./${fileName}/${imageName}`)
         content = content.replace(match, replaceStr)
         fs.writeFileSync(filePath, content, 'utf8')
       } catch (e) {
-        console.log({ code: e.code })
+        log.error('download failed', 'code:', e.code + '')
       }
-      console.log('\n')
+      log.info('\n')
     }
   }
 }
