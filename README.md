@@ -1,51 +1,55 @@
 # load-markdown-image
 
+[中文版](./README-zh.md)
+
+> An npm package that replaces web images in markdown files with local images.
+
 [![NPM](https://nodei.co/npm/load-markdown-image.png?compact=true)](https://npmjs.org/package/load-markdown-image)
 
-## 介绍
+## Introduction
 
-一个将 markdown 文件中的网络图片替换为本地图片的 npm 包。
+Create an images folder in the same level as the MD file, download the web images from the MD file and save them in the images folder.
 
-在 md 文件同级目录下创建 images 文件夹，保存本地图片。
+This npm package will modify the contents of the MD file, so be careful to back it up!
 
-此 npm 包会修改 md 文件的内容，注意备份！
-
-## 如何使用？
+## Installation
 
 ```shell
-# 全局安装
 npm install -g load-markdwon-image
-
 # or
 yarn global add load-markdown-image
 ```
 
-```shell
-# 下载文件 test.md 的图片
-load-markdown-image test.md
+## Usage
 
-# 下载文件夹 test 里面所有 markdonw 文件的图片
-load-markdown-image test
+```shell
+# Download the images in the test.md file
+load-markdown-image test.md
 
 # or
 load-markdown-image "hello world.md"
 
-# 修改图片存放文件夹名称
-load-markdown-image test.md --fileName=img
+# Download images of all MD files in the test folder
+load-markdown-image test
 
+# Change the name of the folder where the images are saved
+load-markdown-image test.md --fileName=myImg
 ```
 
-## 说明
-- 支持下载单个 md 文件的图片；
-- 支持下载文件夹下所有 md 文件的图片；
-- 路径名包含空格，请添加双引号；
-- 支持绝对路径、相对路径；
+## Features
 
-## 例子
+- Support for download images of a single MD file.
+- Support for download images of all MD files under a folder.
+- Support for absolute paths, relative paths.
+- Automatic recognition of image formats.
+- Path name contains spaces, please add double quotes, like `load-markdown-image "hello world.md"`.
 
-## 开发
+## Preview
+![load-markdown-image](https://img-blog.csdnimg.cn/e23ef95e4696418eb5db389940a5cd83.png)
 
-```
+## Development
+
+```shell
 npm run build
 npm link
 npm publish

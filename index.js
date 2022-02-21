@@ -25,8 +25,7 @@ const fileName =
 
 let rootPath = path.resolve(inputPath)
 let files = []
-if (rootPath.slice(-3) === '.md') {
-  // 文件
+if (rootPath.slice(-3) === '.md') { // 文件
   const { dir, base } = path.parse(rootPath)
   rootPath = dir
   files = [base]
@@ -35,7 +34,8 @@ if (rootPath.slice(-3) === '.md') {
 }
 
 if (files.length === 0) {
-  process.exit(0)
+  log.info('No file')
+  return 
 }
 
 const timeStart = Date.parse(new Date())

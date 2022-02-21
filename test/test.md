@@ -4,7 +4,7 @@
 
 ## image
 
-![image](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ed44c6756d7b4c4989e9623baad731b9~tplv-k3u1fbpfcp-image.image) 
+![image](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ed44c6756d7b4c4989e9623baad731b9~tplv-k3u1fbpfcp-image.image)
 
 ## png
 
@@ -31,6 +31,7 @@
 ![ff](https://venturebeat.com/wp-content/uploads/2019/09/CMU-JL2P.png)
 
 # 失效的图片
+
 ![gg](https://zdnet2.cbsistatic.com/hub/i/2020/02/19/d83f9966-d058-4a14-a516-3c509c6b0ade/autocorrect1.gif)
 
 ![中文编码](https://s3.dailyio.cn/2020/09/02/%E5%9B%BE%E7%89%87.png)
