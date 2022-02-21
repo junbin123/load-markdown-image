@@ -39,10 +39,10 @@ if (files.length === 0) {
 }
 
 const timeStart = Date.parse(new Date())
-log.info('process the directory', rootPath)
+log.info('Process the directory:', rootPath)
 work().then(() => {
-  log.success('completed, total time:', `${(Date.parse(new Date()) - timeStart) / 1000}s`)
-  log.success('images saved at:', `${rootPath}/${fileName}`)
+  log.success('Completed in', `${(Date.parse(new Date()) - timeStart) / 1000}s`)
+  log.success('Images saved at:', `${rootPath}/${fileName}`)
 })
 
 async function work() {
@@ -66,12 +66,12 @@ async function work() {
         continue
       }
       try {
-        log.info('downloading', url)
+        log.info('Downloading:', url)
         // 匹配url的图片格式信息
         if (!getTypeByUrl(url)) {
           // 处理url没有格式的图片
           const imageName = await setNoTypeImage(url)
-          log.success('download success', imageName)
+          log.success('Download success:', imageName)
           log.info('\n')
           if (imageName) {
             const replaceStr = match.replace(url, `./${fileName}/${imageName}`)
@@ -81,12 +81,12 @@ async function work() {
           continue
         }
         const { imageName } = await getLocalPath(url)
-        log.success('download success', imageName)
+        log.success('Download success:', imageName)
         const replaceStr = match.replace(url, `./${fileName}/${imageName}`)
         content = content.replace(match, replaceStr)
         fs.writeFileSync(filePath, content, 'utf8')
       } catch (e) {
-        log.error('download failed', 'code:', e.code + '')
+        log.error('Download failed:', 'code:', e.code + '')
       }
       log.info('\n')
     }
