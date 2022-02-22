@@ -1,8 +1,10 @@
+[English](./README.md)
+
 # load-markdown-image
 
-> 一个将 markdown 文件中的网络图片替换为本地图片的 npm 包。
+[![load-markdown-image](https://img.shields.io/badge/npm-v1.0.9-blue)](https://npmjs.org/package/load-markdown-image)
 
-[![NPM](https://nodei.co/npm/load-markdown-image.png?compact=true)](https://npmjs.org/package/load-markdown-image)
+> 一个将 markdown 文件中的网络图片替换为本地图片的 npm 包。
 
 ## 介绍
 
