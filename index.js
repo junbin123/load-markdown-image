@@ -1,3 +1,7 @@
+/**
+ * TODO:base64模式，图片重复处理
+ * TODO:windows 系统路径问题
+ */
 const path = require('path')
 const fs = require('fs')
 const axios = require('axios')
@@ -48,6 +52,19 @@ async function main() {
     for (const imgStr of imgList) {
       const url = imgStr.split('](')[1].slice(0, -1) // http://hello.com/image.png
       if (!/^http/.test(url)) {
+        try {
+          if (isBase64) {
+            // 处理本地路径图片
+            const imageAbsolutePath = path.resolve(rootPath, url)
+            const base64Id = `${new Date().getTime()}-lmi`
+            const addBase64Str = `\n[${base64Id}]: ${getImgBase64({ filePath: imageAbsolutePath })}`
+            const replaceStr = `${imgStr.split('](')[0]}][${base64Id}]`
+            content = content.replace(imgStr, replaceStr) + addBase64Str
+            fs.writeFileSync(filePath, content, 'utf8')
+          }
+        } catch (err) {
+          log.error(err)
+        }
         continue
       }
       log.info('Downloading:', url)
@@ -55,21 +72,40 @@ async function main() {
         // 匹配url的图片格式信息
         if (!getTypeByUrl(url)) {
           // 处理url没有格式的图片
-          const imageName = await setNoTypeImage(url)
+          const { imageName, imagePath } = await setNoTypeImage(url)
           log.success('Download success:', imageName)
           log.info('\n')
           if (imageName) {
-            const replaceStr = imgStr.replace(url, `./${fileName}/${imageName}`)
-            content = content.replace(imgStr, replaceStr)
-            fs.writeFileSync(filePath, content, 'utf8')
+            if (isBase64) {
+              const base64Id = imageName.split('.')[0] + '-lmi'
+              const base64Code = getImgBase64({ filePath: imagePath })
+              const addBase64Str = `\n[${base64Id}]: ${base64Code}`
+              const replaceStr = `${imgStr.split('](')[0]}][${base64Id}]`
+              content = content.replace(imgStr, replaceStr) + addBase64Str
+              fs.writeFileSync(filePath, content, 'utf8')
+              fs.unlinkSync(imagePath)
+            } else {
+              const replaceStr = imgStr.replace(url, `./${fileName}/${imageName}`)
+              content = content.replace(imgStr, replaceStr)
+              fs.writeFileSync(filePath, content, 'utf8')
+            }
           }
           continue
         }
-        const { imageName } = await getLocalPath(url)
+        const { imageName, imagePath } = await getLocalPath(url)
         log.success('Download success:', imageName)
-        const replaceStr = imgStr.replace(url, `./${fileName}/${imageName}`)
-        content = content.replace(imgStr, replaceStr)
-        fs.writeFileSync(filePath, content, 'utf8')
+        if (isBase64) {
+          const base64Id = imageName.split('.')[0] + '-lmi'
+          const addBase64Str = `\n[${base64Id}]: ${getImgBase64({ filePath: imagePath })}`
+          const replaceStr = `${imgStr.split('](')[0]}][${base64Id}]`
+          content = content.replace(imgStr, replaceStr) + addBase64Str
+          fs.writeFileSync(filePath, content, 'utf8')
+          fs.unlinkSync(imagePath)
+        } else {
+          const replaceStr = imgStr.replace(url, `./${fileName}/${imageName}`)
+          content = content.replace(imgStr, replaceStr)
+          fs.writeFileSync(filePath, content, 'utf8')
+        }
       } catch (e) {
         log.error('Download failed:', 'code:', e.code + '')
       }
@@ -104,7 +140,10 @@ async function setNoTypeImage(url) {
   const imageType = getImageSuffix(buffer)
   if (imageType) {
     fs.renameSync(imagePath, imagePath + imageType)
-    return imageName + imageType
+    return {
+      imagePath: imagePath + imageType,
+      imageName: imageName + imageType,
+    }
   } else {
     fs.unlinkSync(imagePath)
     return ''
