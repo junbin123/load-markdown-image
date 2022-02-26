@@ -25,7 +25,8 @@ const fileName =
 
 let rootPath = path.resolve(inputPath)
 let files = []
-if (rootPath.slice(-3) === '.md') { // 文件
+if (rootPath.slice(-3) === '.md') {
+  // 文件
   const { dir, base } = path.parse(rootPath)
   rootPath = dir
   files = [base]
@@ -35,7 +36,7 @@ if (rootPath.slice(-3) === '.md') { // 文件
 
 if (files.length === 0) {
   log.info('No file')
-  return 
+  return
 }
 
 const timeStart = Date.parse(new Date())
@@ -57,7 +58,9 @@ async function work() {
   }
   for (const fileItem of files) {
     const filePath = `${rootPath}/${fileItem}`
-    let content = fs.readFileSync(filePath, 'utf8')
+    let originContent = fs.readFileSync(filePath, 'utf8')
+    // 过滤掉code
+    let { content, placeholderDict } = filterCode(originContent)
     const pattern = /!\[(.*?)\]\((.*?)\)/gm // 匹配图片正则
     const imgList = content.match(pattern) || [] // ![img](http://hello.com/image.png)
     for (const match of imgList) {
@@ -76,7 +79,7 @@ async function work() {
           if (imageName) {
             const replaceStr = match.replace(url, `./${fileName}/${imageName}`)
             content = content.replace(match, replaceStr)
-            fs.writeFileSync(filePath, content, 'utf8')
+            fs.writeFileSync(filePath, getOriginContent({ content, placeholderDict }), 'utf8')
           }
           continue
         }
@@ -84,7 +87,7 @@ async function work() {
         log.success('Download success:', imageName)
         const replaceStr = match.replace(url, `./${fileName}/${imageName}`)
         content = content.replace(match, replaceStr)
-        fs.writeFileSync(filePath, content, 'utf8')
+        fs.writeFileSync(filePath, getOriginContent({ content, placeholderDict }), 'utf8')
       } catch (e) {
         log.error('Download failed:', 'code:', e.code + '')
       }
@@ -184,4 +187,42 @@ function getImageSuffix(fileBuffer) {
   }
   // 未能识别到该文件类型
   return ''
+}
+
+function filterCode(content = '') {
+  let tempContent = content
+  const placeholderDict = {}
+  const regex1 = /\s?\`\`\`\n?([^`]+)\`\`\`/gm
+  const list = content.match(regex1) || []
+  list.forEach((item) => {
+    const id = 'placeholder-' + uuid()
+    tempContent = tempContent.replace(item, id)
+    placeholderDict[id] = item
+  })
+  tempContent = tempContent
+    .split('\n')
+    .map((item) => {
+      if (/^\s{4,}/g.test(item) || /\`([\s\S]*)\`/g.test(item)) {
+        const id = 'placeholder-' + uuid()
+        placeholderDict[id] = item
+        return id
+      }
+      return item
+    })
+    .join('\n')
+  return { content: tempContent, placeholderDict }
+}
+
+function getOriginContent({ content, placeholderDict }) {
+  return Object.keys(placeholderDict).reduce((res, item, index) => {
+    return res.replace(item, placeholderDict[item])
+  }, content)
+}
+
+function uuid() {
+  function S4() {
+    return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1)
+  }
+  const res = S4() + S4() + '-' + S4() + '-' + S4() + '-' + S4() + '-' + S4() + S4() + S4()
+  return res
 }
