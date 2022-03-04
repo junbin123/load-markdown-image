@@ -36,7 +36,7 @@ if (rootPath.slice(-3) === '.md') {
 
 if (files.length === 0) {
   log.info('No file')
-  return
+  process.exit(1)
 }
 
 const timeStart = Date.parse(new Date())
